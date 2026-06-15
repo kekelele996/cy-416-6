@@ -1,0 +1,246 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --rf-bg: #f5f7f1;
+  --rf-surface: #ffffff;
+  --rf-text: #17211b;
+  --rf-muted: #66736d;
+  --rf-border: #dde5dc;
+  --rf-progress: #e9eee6;
+}
+
+:root[data-theme='dark'] {
+  --rf-bg: #101612;
+  --rf-surface: #18201b;
+  --rf-text: #eef4ed;
+  --rf-muted: #9ca89f;
+  --rf-border: #2c382f;
+  --rf-progress: #27332b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  color: var(--rf-text);
+  background: var(--rf-bg);
+}
+
+a {
+  color: inherit;
+}
+
+.loading-screen {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--rf-bg);
+  color: var(--rf-text);
+}
+
+.app-layout {
+  min-height: 100vh;
+  color: var(--rf-text);
+}
+
+.app-sider {
+  border-right: 1px solid var(--rf-border);
+  background: var(--rf-surface) !important;
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 18px;
+}
+
+.brand-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 8px;
+  background: #2f5d50;
+  color: #f5f7f1;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.app-menu {
+  border-inline-end: none !important;
+  background: transparent !important;
+}
+
+.app-header {
+  display: flex;
+  height: auto;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--rf-border);
+  background: color-mix(in srgb, var(--rf-surface) 94%, transparent) !important;
+  padding: 14px 24px !important;
+  line-height: 1.2;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-content {
+  min-height: calc(100vh - 72px);
+  padding: clamp(18px, 3vw, 32px);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--rf-bg) 92%, #d8942f 8%), transparent 280px),
+    var(--rf-bg);
+}
+
+.page-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.metric-panel,
+.surface-panel,
+.timeline-shell,
+.room-status-card,
+.empty-state {
+  border: 1px solid var(--rf-border);
+  border-radius: 8px;
+  background: var(--rf-surface);
+}
+
+.metric-panel {
+  padding: 18px;
+}
+
+.surface-panel {
+  padding: clamp(16px, 2.2vw, 24px);
+}
+
+.dashboard-grid,
+.booking-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.75fr);
+  gap: 18px;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section-head .ant-typography {
+  margin: 0 !important;
+}
+
+.room-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.room-status-card {
+  overflow: hidden;
+}
+
+.room-card-cover {
+  display: flex;
+  min-height: 84px;
+  align-items: flex-start;
+  padding: 14px;
+}
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 12px;
+  border: 1px solid var(--rf-border);
+  border-radius: 8px;
+  background: var(--rf-surface);
+  padding: 14px;
+}
+
+.time-slot-picker {
+  border: 1px solid var(--rf-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--rf-surface) 88%, var(--rf-bg));
+  padding: 14px;
+}
+
+.stack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.compact-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--rf-border);
+  padding-bottom: 10px;
+  color: var(--rf-text);
+}
+
+.empty-state {
+  padding: 28px;
+}
+
+.ant-typography,
+.ant-statistic-title,
+.ant-statistic-content {
+  color: var(--rf-text);
+}
+
+.ant-typography-secondary,
+.ant-statistic-title {
+  color: var(--rf-muted) !important;
+}
+
+@media (max-width: 900px) {
+  .app-header,
+  .page-heading,
+  .section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .dashboard-grid,
+  .booking-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-bar {
+    grid-template-columns: 1fr;
+  }
+}

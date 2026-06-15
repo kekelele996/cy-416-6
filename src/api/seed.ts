@@ -1,0 +1,142 @@
+import dayjs from 'dayjs';
+import { BookingStatus } from '@/constants/booking';
+import { RoomEquipment, RoomStatus } from '@/constants/room';
+import type { Booking } from '@/models/booking';
+import type { Room } from '@/models/room';
+import { UserRole, type User } from '@/models/user';
+
+export const seedUsers: User[] = [
+  {
+    id: 'u-admin',
+    name: '林知夏',
+    email: 'admin@roomflow.local',
+    avatar: 'https://api.dicebear.com/9.x/thumbs/svg?seed=roomflow-admin',
+    department: 'operations',
+    role: UserRole.ADMIN,
+    created_at: dayjs().subtract(120, 'day').toISOString(),
+  },
+  {
+    id: 'u-employee',
+    name: '陈安',
+    email: 'chen.an@roomflow.local',
+    avatar: 'https://api.dicebear.com/9.x/thumbs/svg?seed=roomflow-employee',
+    department: 'product',
+    role: UserRole.EMPLOYEE,
+    created_at: dayjs().subtract(80, 'day').toISOString(),
+  },
+  {
+    id: 'u-design',
+    name: '苏野',
+    email: 'su.ye@roomflow.local',
+    avatar: 'https://api.dicebear.com/9.x/thumbs/svg?seed=roomflow-design',
+    department: 'design',
+    role: UserRole.EMPLOYEE,
+    created_at: dayjs().subtract(66, 'day').toISOString(),
+  },
+];
+
+export const seedRooms: Room[] = [
+  {
+    id: 'room-aurora',
+    name: 'Aurora 极光',
+    floor: '12F',
+    capacity: 6,
+    equipment: [RoomEquipment.PROJECTOR, RoomEquipment.WHITEBOARD],
+    status: RoomStatus.AVAILABLE,
+    images: ['linear-gradient(135deg, #e5f0d5, #cadfd1)'],
+    open_time: '08:30',
+    close_time: '20:00',
+  },
+  {
+    id: 'room-harbor',
+    name: 'Harbor 港湾',
+    floor: '15F',
+    capacity: 12,
+    equipment: [RoomEquipment.PROJECTOR, RoomEquipment.VIDEO, RoomEquipment.PHONE],
+    status: RoomStatus.AVAILABLE,
+    images: ['linear-gradient(135deg, #dbe8ee, #f2e6c8)'],
+    open_time: '08:00',
+    close_time: '21:00',
+  },
+  {
+    id: 'room-slate',
+    name: 'Slate 石板',
+    floor: '18F',
+    capacity: 18,
+    equipment: [RoomEquipment.WHITEBOARD, RoomEquipment.VIDEO],
+    status: RoomStatus.MAINTENANCE,
+    images: ['linear-gradient(135deg, #e8e0d0, #b9c1b8)'],
+    open_time: '09:00',
+    close_time: '18:30',
+  },
+  {
+    id: 'room-courtyard',
+    name: 'Courtyard 中庭',
+    floor: '22F',
+    capacity: 28,
+    equipment: [RoomEquipment.PROJECTOR, RoomEquipment.WHITEBOARD, RoomEquipment.VIDEO, RoomEquipment.PHONE],
+    status: RoomStatus.AVAILABLE,
+    images: ['linear-gradient(135deg, #d8e7c2, #f0d89a)'],
+    open_time: '08:00',
+    close_time: '22:00',
+  },
+  {
+    id: 'room-archive',
+    name: 'Archive 档案',
+    floor: '12F',
+    capacity: 4,
+    equipment: [RoomEquipment.WHITEBOARD, RoomEquipment.PHONE],
+    status: RoomStatus.DISABLED,
+    images: ['linear-gradient(135deg, #d7d2c9, #c4beb2)'],
+    open_time: '09:30',
+    close_time: '18:00',
+  },
+];
+
+export const seedBookings: Booking[] = [
+  {
+    id: 'booking-daily-standup',
+    room_id: 'room-aurora',
+    user_id: 'u-employee',
+    title: '产品晨会',
+    attendees: ['林知夏', '陈安', '苏野'],
+    start_time: dayjs().hour(9).minute(30).second(0).millisecond(0).toISOString(),
+    end_time: dayjs().hour(10).minute(0).second(0).millisecond(0).toISOString(),
+    status: BookingStatus.UPCOMING,
+    created_at: dayjs().subtract(2, 'day').toISOString(),
+  },
+  {
+    id: 'booking-design-review',
+    room_id: 'room-harbor',
+    user_id: 'u-design',
+    title: '设计评审',
+    attendees: ['苏野', '陈安', '体验小组'],
+    start_time: dayjs().hour(14).minute(0).second(0).millisecond(0).toISOString(),
+    end_time: dayjs().hour(15).minute(30).second(0).millisecond(0).toISOString(),
+    status: BookingStatus.UPCOMING,
+    created_at: dayjs().subtract(1, 'day').toISOString(),
+  },
+  {
+    id: 'booking-admin-maintenance',
+    room_id: 'room-slate',
+    user_id: 'u-admin',
+    title: '设备巡检',
+    attendees: ['林知夏', '设施供应商'],
+    start_time: dayjs().hour(11).minute(0).second(0).millisecond(0).toISOString(),
+    end_time: dayjs().hour(12).minute(0).second(0).millisecond(0).toISOString(),
+    status: BookingStatus.UPCOMING,
+    created_at: dayjs().subtract(3, 'day').toISOString(),
+  },
+  {
+    id: 'booking-ended-sync',
+    room_id: 'room-courtyard',
+    user_id: 'u-admin',
+    title: '季度同步',
+    attendees: ['管理组', 'HRBP'],
+    start_time: dayjs().subtract(1, 'day').hour(16).minute(0).second(0).millisecond(0).toISOString(),
+    end_time: dayjs().subtract(1, 'day').hour(17).minute(0).second(0).millisecond(0).toISOString(),
+    status: BookingStatus.ENDED,
+    created_at: dayjs().subtract(6, 'day').toISOString(),
+    checked_in: true,
+  },
+];
