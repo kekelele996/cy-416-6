@@ -33,7 +33,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useBookingStore } from '@/stores/bookingStore';
 import { useRoomStore } from '@/stores/roomStore';
 import { useThemeStore } from '@/stores/themeStore';
-import { formatDate, formatDepartment, formatTimeRange } from '@/utils/formatters';
+import { formatDepartment } from '@/utils/formatters';
 
 const { Header, Sider, Content } = Layout;
 
@@ -60,20 +60,33 @@ function AppShell() {
   const notifications = useBookingStore((state) => state.notifications);
   const clearNotification = useBookingStore((state) => state.clearNotification);
   const markNotificationRead = useBookingStore((state) => state.markNotificationRead);
+  const restoreNotificationsFromWaitlists = useBookingStore((state) => state.restoreNotificationsFromWaitlists);
+  const refreshNotifications = useBookingStore((state) => state.refreshNotifications);
   const rooms = useRoomStore((state) => state.rooms);
 
   useEffect(() => {
     void Promise.all([initializeTheme(), initializeAuth(), initializeRooms(), initializeBookings()]);
   }, [initializeAuth, initializeBookings, initializeRooms, initializeTheme]);
 
+  useEffect(() => {
+    if (!authInitialized || !currentUser) {
+      return;
+    }
+    void (async () => {
+      await refreshNotifications(currentUser.id);
+      if (rooms.length > 0) {
+        await restoreNotificationsFromWaitlists(currentUser.id, rooms);
+      }
+    })();
+  }, [authInitialized, currentUser?.id, refreshNotifications, restoreNotificationsFromWaitlists, rooms.length]);
+
   const selectedKey = useMemo(() => {
     const matched = navItems.find((item) => location.pathname.startsWith(item.key));
     return matched?.key ?? '/dashboard';
   }, [location.pathname]);
 
-  const roomMap = useMemo(() => new Map(rooms.map((r) => [r.id, r])), [rooms]);
   const userNotifications = useMemo(
-    () => notifications.filter((n) => n.booking.user_id === currentUser?.id),
+    () => notifications.filter((n) => n.user_id === currentUser?.id),
     [notifications, currentUser?.id],
   );
 
@@ -169,13 +182,15 @@ function AppShell() {
                       type="success"
                       showIcon
                       closable
-                      onClose={() => clearNotification(n.id)}
+                      onClose={() => {
+                        void clearNotification(n.id);
+                      }}
                       onClick={() => {
-                        markNotificationRead(n.id);
+                        void markNotificationRead(n.id);
                         navigate('/my-bookings');
                       }}
-                      message={WAITLIST_MESSAGES.convertedTitle}
-                      description={`「${n.booking.title}」已候补转正，${roomMap.get(n.booking.room_id)?.name ?? '会议室'} · ${formatDate(n.booking.start_time)} ${formatTimeRange(n.booking.start_time, n.booking.end_time)}，点击查看详情`}
+                      message={n.title}
+                      description={n.description}
                       style={{ cursor: 'pointer' }}
                     />
                   </div>

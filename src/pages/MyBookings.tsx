@@ -82,7 +82,7 @@ export function MyBookings() {
           <Button size="small" onClick={() => checkIn(record.id)} disabled={record.checked_in}>
             签到
           </Button>
-          <Button danger size="small" disabled={!BOOKING_MUTABLE_STATUSES.includes(record.status)} onClick={() => cancel(record.id)}>
+          <Button danger size="small" disabled={!BOOKING_MUTABLE_STATUSES.includes(record.status)} onClick={() => cancel(record.id, rooms)}>
             取消
           </Button>
         </Space>
