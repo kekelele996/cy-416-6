@@ -9,6 +9,7 @@ import { RoomStatus } from '@/constants/room';
 import { useAuth } from '@/hooks/useAuth';
 import { useTimeConflict } from '@/hooks/useTimeConflict';
 import type { BookingDraft } from '@/models/booking';
+import type { WaitlistDraft } from '@/models/waitlist';
 import { useBookingStore } from '@/stores/bookingStore';
 import { useRoomStore } from '@/stores/roomStore';
 import { formatRoomStatus } from '@/utils/formatters';
@@ -27,7 +28,9 @@ export function Booking() {
   const navigate = useNavigate();
   const rooms = useRoomStore((state) => state.rooms);
   const bookings = useBookingStore((state) => state.bookings);
+  const waitlists = useBookingStore((state) => state.waitlists);
   const createBooking = useBookingStore((state) => state.create);
+  const joinWaitlist = useBookingStore((state) => state.joinWaitlist);
   const loading = useBookingStore((state) => state.loading);
   const { currentUser } = useAuth();
   const [date, setDate] = useState<Dayjs>(dayjs());
@@ -55,6 +58,22 @@ export function Booking() {
   );
   const conflict = useTimeConflict(draftPreview);
 
+  const existingWaitlist = useMemo(() => {
+    if (!currentUser?.id || !selectedRoomId || !draftPreview.start_time || !draftPreview.end_time) {
+      return undefined;
+    }
+    return waitlists.find(
+      (w) =>
+        w.user_id === currentUser.id &&
+        w.room_id === selectedRoomId &&
+        w.status === 'pending' &&
+        w.start_time === draftPreview.start_time &&
+        w.end_time === draftPreview.end_time,
+    );
+  }, [currentUser?.id, draftPreview.end_time, draftPreview.start_time, selectedRoomId, waitlists]);
+
+  const canJoinWaitlist = conflict.hasConflict && !existingWaitlist && draftPreview.start_time && draftPreview.end_time;
+
   const onFinish = async (values: BookingFormValues) => {
     const attendees = normalizeAttendees(values.attendees);
     const start = toIsoFromDateAndTime(date, startTime);
@@ -81,6 +100,37 @@ export function Booking() {
     });
 
     if (ok) {
+      navigate('/my-bookings');
+    }
+  };
+
+  const onJoinWaitlist = async (values: BookingFormValues) => {
+    const attendees = normalizeAttendees(values.attendees);
+    const start = toIsoFromDateAndTime(date, startTime);
+    const end = toIsoFromDateAndTime(date, endTime);
+    const timeError = validateTimeRange(start, end);
+    const roomError = assertRoomBookable(selectedRoom);
+    const attendeesError = validateAttendees(attendees);
+
+    if (timeError || roomError || attendeesError || !currentUser) {
+      form.setFields([
+        ...(attendeesError ? [{ name: 'attendees' as const, errors: [attendeesError] }] : []),
+        ...(roomError ? [{ name: 'room_id' as const, errors: [roomError] }] : []),
+      ]);
+      return;
+    }
+
+    const waitlistDraft: WaitlistDraft = {
+      room_id: values.room_id,
+      user_id: currentUser.id,
+      title: values.title,
+      attendees,
+      start_time: start,
+      end_time: end,
+    };
+
+    const result = await joinWaitlist(waitlistDraft);
+    if (result) {
       navigate('/my-bookings');
     }
   };
@@ -141,9 +191,15 @@ export function Booking() {
             {selectedRoomId && (
               <Alert
                 className="mb-4"
-                type={conflict.hasConflict ? 'warning' : 'success'}
+                type={conflict.hasConflict ? (canJoinWaitlist ? 'warning' : 'warning') : 'success'}
                 showIcon
-                message={conflict.message}
+                message={
+                  existingWaitlist
+                    ? `您已在候补队列中，当前位置：第 ${existingWaitlist.queue_position} 位`
+                    : conflict.hasConflict
+                      ? `该会议室在所选时间段已有会议，可加入候补队列等待空位`
+                      : conflict.message
+                }
               />
             )}
 
@@ -153,9 +209,25 @@ export function Booking() {
             <Form.Item name="attendees" label="参会人" rules={[{ required: true, message: FORM_MESSAGES.required }]}>
               <Input.TextArea rows={4} placeholder="用逗号或换行分隔" />
             </Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} disabled={conflict.hasConflict}>
-              提交预约
-            </Button>
+            <Space>
+              <Button type="primary" htmlType="submit" loading={loading} disabled={conflict.hasConflict}>
+                提交预约
+              </Button>
+              <Button
+                type="default"
+                loading={loading}
+                disabled={!canJoinWaitlist}
+                onClick={async () => {
+                  try {
+                    const values = await form.validateFields();
+                    await onJoinWaitlist(values);
+                  } catch {
+                  }
+                }}
+              >
+                {existingWaitlist ? '已加入候补' : '加入候补队列'}
+              </Button>
+            </Space>
           </Form>
         </section>
 

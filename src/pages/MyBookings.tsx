@@ -2,18 +2,28 @@ import { Button, Form, Input, Modal, Space, Table, Tabs, Tag, Typography } from 
 import { useMemo, useState } from 'react';
 import { BookingTimeline } from '@/components/common/BookingTimeline';
 import { EmptyState } from '@/components/common/EmptyState';
-import { BOOKING_MUTABLE_STATUSES } from '@/constants/booking';
+import { BOOKING_MUTABLE_STATUSES, WAITLIST_MUTABLE_STATUSES } from '@/constants/booking';
 import type { Booking } from '@/models/booking';
+import type { Waitlist } from '@/models/waitlist';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookingStore } from '@/stores/bookingStore';
 import { useRoomStore } from '@/stores/roomStore';
-import { formatBookingStatus, formatTimeRange, getBookingStatusColor } from '@/utils/formatters';
+import {
+  formatBookingStatus,
+  formatTimeRange,
+  formatWaitlistStatus,
+  getBookingStatusColor,
+  getWaitlistStatusColor,
+} from '@/utils/formatters';
 import { normalizeAttendees } from '@/utils/validators';
+import { WAITLIST_MESSAGES } from '@/constants/messages';
 
 export function MyBookings() {
   const rooms = useRoomStore((state) => state.rooms);
   const bookings = useBookingStore((state) => state.bookings);
+  const waitlists = useBookingStore((state) => state.waitlists);
   const cancel = useBookingStore((state) => state.cancel);
+  const leaveWaitlist = useBookingStore((state) => state.leaveWaitlist);
   const checkIn = useBookingStore((state) => state.checkIn);
   const edit = useBookingStore((state) => state.edit);
   const { currentUser } = useAuth();
@@ -23,6 +33,8 @@ export function MyBookings() {
 
   const owned = bookings.filter((booking) => booking.user_id === currentUser?.id);
   const joined = bookings.filter((booking) => booking.attendees.includes(currentUser?.name ?? ''));
+  const myWaitlists = waitlists.filter((w) => w.user_id === currentUser?.id);
+
   const timelineBookings = useMemo(
     () => Array.from(new Map([...owned, ...joined].map((booking) => [booking.id, booking])).values()).slice(0, 8),
     [joined, owned],
@@ -36,7 +48,7 @@ export function MyBookings() {
     });
   };
 
-  const columns = [
+  const bookingColumns = [
     {
       title: '会议',
       dataIndex: 'title',
@@ -78,11 +90,76 @@ export function MyBookings() {
     },
   ];
 
+  const waitlistColumns = [
+    {
+      title: '会议',
+      dataIndex: 'title',
+      key: 'title',
+      render: (title: string, record: Waitlist) => (
+        <div>
+          <Typography.Text strong>{title}</Typography.Text>
+          <div className="text-xs text-[var(--rf-muted)]">{roomMap.get(record.room_id)?.name ?? '未知会议室'}</div>
+        </div>
+      ),
+    },
+    {
+      title: '时间',
+      key: 'time',
+      render: (_: unknown, record: Waitlist) => formatTimeRange(record.start_time, record.end_time),
+    },
+    {
+      title: '排队位置',
+      dataIndex: 'queue_position',
+      key: 'queue_position',
+      render: (pos: number, record: Waitlist) =>
+        record.status === 'pending' ? (
+          <Tag color="orange">
+            {WAITLIST_MESSAGES.positionPrefix}
+            {pos}
+            {WAITLIST_MESSAGES.positionSuffix}
+          </Tag>
+        ) : (
+          <Tag color="default">-</Tag>
+        ),
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: Waitlist['status']) => (
+        <Tag color={getWaitlistStatusColor(status)}>{formatWaitlistStatus(status)}</Tag>
+      ),
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      render: (_: unknown, record: Waitlist) => (
+        <Space wrap>
+          <Button
+            danger
+            size="small"
+            disabled={!WAITLIST_MUTABLE_STATUSES.includes(record.status)}
+            onClick={() => leaveWaitlist(record.id)}
+          >
+            退出候补
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
   const tableFor = (items: Booking[]) =>
     items.length ? (
-      <Table rowKey="id" columns={columns} dataSource={items} pagination={{ pageSize: 6 }} />
+      <Table rowKey="id" columns={bookingColumns} dataSource={items} pagination={{ pageSize: 6 }} />
     ) : (
       <EmptyState title="暂无会议" description="创建或加入会议后会显示在这里" />
+    );
+
+  const waitlistTable = () =>
+    myWaitlists.length ? (
+      <Table rowKey="id" columns={waitlistColumns} dataSource={myWaitlists} pagination={{ pageSize: 6 }} />
+    ) : (
+      <EmptyState title={WAITLIST_MESSAGES.noWaitlist} description="在满员时段预约时可加入候补队列" />
     );
 
   return (
@@ -93,7 +170,7 @@ export function MyBookings() {
             我的会议
           </Typography.Title>
           <Typography.Paragraph className="!m-0 text-[var(--rf-muted)]">
-            查看、编辑、取消和签到会议
+            查看、编辑、取消和签到会议，管理候补队列
           </Typography.Paragraph>
         </div>
       </div>
@@ -104,6 +181,7 @@ export function MyBookings() {
             items={[
               { key: 'owned', label: '我创建的', children: tableFor(owned) },
               { key: 'joined', label: '我参与的', children: tableFor(joined) },
+              { key: 'waitlist', label: '候补排队', children: waitlistTable() },
             ]}
           />
         </section>

@@ -30,3 +30,27 @@ export const BOOKING_MUTABLE_STATUSES = [
   BookingStatus.UPCOMING,
   BookingStatus.ONGOING,
 ];
+
+export enum WaitlistStatus {
+  PENDING = 'pending',
+  CONVERTED = 'converted',
+  CANCELLED = 'cancelled',
+  EXPIRED = 'expired',
+}
+
+export const WAITLIST_STATUS_LABELS: Record<WaitlistStatus, string> = {
+  [WaitlistStatus.PENDING]: '候补中',
+  [WaitlistStatus.CONVERTED]: '已转正',
+  [WaitlistStatus.CANCELLED]: '已取消',
+  [WaitlistStatus.EXPIRED]: '已过期',
+};
+
+export const WAITLIST_STATUS_COLORS: Record<WaitlistStatus, string> = {
+  [WaitlistStatus.PENDING]: 'orange',
+  [WaitlistStatus.CONVERTED]: 'green',
+  [WaitlistStatus.CANCELLED]: 'red',
+  [WaitlistStatus.EXPIRED]: 'default',
+};
+
+export const WAITLIST_MUTABLE_STATUSES = [WaitlistStatus.PENDING];
+

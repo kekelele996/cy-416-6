@@ -1,4 +1,5 @@
 import {
+  Alert,
   App as AntApp,
   Avatar,
   Button,
@@ -13,6 +14,7 @@ import {
 } from 'antd';
 import {
   AppstoreOutlined,
+  BellOutlined,
   CalendarOutlined,
   MoonOutlined,
   ScheduleOutlined,
@@ -20,9 +22,10 @@ import {
   ToolOutlined,
 } from '@ant-design/icons';
 import { useEffect, useMemo } from 'react';
-import { Link, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { GlobalErrorBoundary } from '@/components/common/GlobalErrorBoundary';
 import { MessageBinder } from '@/components/common/MessageBinder';
+import { WAITLIST_MESSAGES } from '@/constants/messages';
 import { THEME_LABELS } from '@/constants/themes';
 import { useAuth } from '@/hooks/useAuth';
 import { GuardedRoute, RootRedirect, appRoutes } from '@/router';
@@ -30,7 +33,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useBookingStore } from '@/stores/bookingStore';
 import { useRoomStore } from '@/stores/roomStore';
 import { useThemeStore } from '@/stores/themeStore';
-import { formatDepartment } from '@/utils/formatters';
+import { formatDate, formatDepartment, formatTimeRange } from '@/utils/formatters';
 
 const { Header, Sider, Content } = Layout;
 
@@ -44,6 +47,7 @@ const navItems = [
 
 function AppShell() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { users, currentUser, login, isAdmin } = useAuth();
   const authInitialized = useAuthStore((state) => state.initialized);
   const initializeAuth = useAuthStore((state) => state.initialize);
@@ -53,6 +57,10 @@ function AppShell() {
   const toggleTheme = useThemeStore((state) => state.toggle);
   const mode = useThemeStore((state) => state.mode);
   const tokens = useThemeStore((state) => state.tokens);
+  const notifications = useBookingStore((state) => state.notifications);
+  const clearNotification = useBookingStore((state) => state.clearNotification);
+  const markNotificationRead = useBookingStore((state) => state.markNotificationRead);
+  const rooms = useRoomStore((state) => state.rooms);
 
   useEffect(() => {
     void Promise.all([initializeTheme(), initializeAuth(), initializeRooms(), initializeBookings()]);
@@ -62,6 +70,12 @@ function AppShell() {
     const matched = navItems.find((item) => location.pathname.startsWith(item.key));
     return matched?.key ?? '/dashboard';
   }, [location.pathname]);
+
+  const roomMap = useMemo(() => new Map(rooms.map((r) => [r.id, r])), [rooms]);
+  const userNotifications = useMemo(
+    () => notifications.filter((n) => n.booking.user_id === currentUser?.id),
+    [notifications, currentUser?.id],
+  );
 
   if (!authInitialized || !currentUser) {
     return (
@@ -117,6 +131,15 @@ function AppShell() {
                   </Typography.Title>
                 </div>
                 <div className="header-actions">
+                  {userNotifications.filter((n) => !n.read).length > 0 && (
+                    <Button
+                      type="default"
+                      icon={<BellOutlined />}
+                      onClick={() => navigate('/my-bookings')}
+                    >
+                      候补转正 ({userNotifications.filter((n) => !n.read).length})
+                    </Button>
+                  )}
                   <Select
                     aria-label="切换用户"
                     value={currentUser.id}
@@ -137,6 +160,27 @@ function AppShell() {
                   <Avatar src={currentUser.avatar}>{currentUser.name.slice(0, 1)}</Avatar>
                 </div>
               </Header>
+
+              {userNotifications
+                .filter((n) => !n.read)
+                .map((n) => (
+                  <div key={n.id} className="px-6 pt-4">
+                    <Alert
+                      type="success"
+                      showIcon
+                      closable
+                      onClose={() => clearNotification(n.id)}
+                      onClick={() => {
+                        markNotificationRead(n.id);
+                        navigate('/my-bookings');
+                      }}
+                      message={WAITLIST_MESSAGES.convertedTitle}
+                      description={`「${n.booking.title}」已候补转正，${roomMap.get(n.booking.room_id)?.name ?? '会议室'} · ${formatDate(n.booking.start_time)} ${formatTimeRange(n.booking.start_time, n.booking.end_time)}，点击查看详情`}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </div>
+                ))}
+
               <Content className="app-content">
                 <Routes>
                   <Route path="/" element={<RootRedirect />} />

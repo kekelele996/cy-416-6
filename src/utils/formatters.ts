@@ -1,5 +1,12 @@
 import dayjs from 'dayjs';
-import { BOOKING_STATUS_COLORS, BOOKING_STATUS_LABELS, BookingStatus } from '@/constants/booking';
+import {
+  BOOKING_STATUS_COLORS,
+  BOOKING_STATUS_LABELS,
+  BookingStatus,
+  WAITLIST_STATUS_COLORS,
+  WAITLIST_STATUS_LABELS,
+  WaitlistStatus,
+} from '@/constants/booking';
 import {
   EQUIPMENT_LABELS,
   ROOM_STATUS_COLORS,
@@ -22,6 +29,14 @@ export function formatBookingStatus(status: BookingStatus): string {
 
 export function getBookingStatusColor(status: BookingStatus): string {
   return BOOKING_STATUS_COLORS[status] ?? 'default';
+}
+
+export function formatWaitlistStatus(status: WaitlistStatus): string {
+  return WAITLIST_STATUS_LABELS[status] ?? '未知状态';
+}
+
+export function getWaitlistStatusColor(status: WaitlistStatus): string {
+  return WAITLIST_STATUS_COLORS[status] ?? 'default';
 }
 
 export function formatEquipment(equipment: RoomEquipment): string {

@@ -1,4 +1,4 @@
-import { BookingStatus } from './booking';
+import { BookingStatus, WaitlistStatus } from './booking';
 import { RoomStatus } from './room';
 
 export const PAGE_MESSAGES = {
@@ -32,6 +32,8 @@ export const CONFLICT_MESSAGES = {
   noConflict: '时间段可预约',
   overlapPrefix: '冲突会议',
   cancelledIgnored: `状态为 ${BookingStatus.CANCELLED} 的会议不参与冲突检测`,
+  waitlistAvailable: '该时段已被预约，但可加入候补队列，有人取消时按顺序自动转正',
+  waitlistAlreadyJoined: '您已在该时段的候补队列中',
 };
 
 export const ROOM_STATUS_MESSAGES: Record<RoomStatus, string> = {
@@ -45,4 +47,22 @@ export const BOOKING_STATUS_MESSAGES: Record<BookingStatus, string> = {
   [BookingStatus.ONGOING]: '会议进行中，可签到',
   [BookingStatus.ENDED]: '会议已结束，仅供回顾',
   [BookingStatus.CANCELLED]: '会议已取消，不占用会议室',
+};
+
+export const WAITLIST_STATUS_MESSAGES: Record<WaitlistStatus, string> = {
+  [WaitlistStatus.PENDING]: '候补中，有空位时将按队列顺序自动转正',
+  [WaitlistStatus.CONVERTED]: '已成功转为正式预约',
+  [WaitlistStatus.CANCELLED]: '候补已取消',
+  [WaitlistStatus.EXPIRED]: '会议时间已过，候补自动失效',
+};
+
+export const WAITLIST_MESSAGES = {
+  joined: '已成功加入候补队列，当前排队位置：',
+  cancelled: '候补已取消',
+  converted: '候补转正成功！您的会议已自动创建',
+  convertedTitle: '候补转正通知',
+  positionPrefix: '第',
+  positionSuffix: '位',
+  noWaitlist: '暂无候补记录',
+  expiredNotice: '会议时间已到，候补自动失效',
 };

@@ -1,5 +1,6 @@
 import { nanoid } from '@/api/id';
 import { seedBookings } from '@/api/seed';
+import { tryConvertNextWaitlist } from '@/api/waitlistApi';
 import { BookingStatus } from '@/constants/booking';
 import type { Booking, BookingDraft } from '@/models/booking';
 import {
@@ -66,8 +67,31 @@ export async function updateBooking(bookingId: string, patch: Partial<Booking>):
   return writeCollection(STORAGE_KEYS.bookings, nextBookings);
 }
 
-export async function cancelBooking(bookingId: string): Promise<Booking[]> {
-  return updateBooking(bookingId, { status: BookingStatus.CANCELLED });
+export async function cancelBooking(
+  bookingId: string,
+): Promise<{ bookings: Booking[]; converted?: { booking: Booking; waitlistId: string } }> {
+  const bookings = await getBookings();
+  const target = bookings.find((b) => b.id === bookingId);
+  const updatedBookings = await updateBooking(bookingId, { status: BookingStatus.CANCELLED });
+
+  if (!target) {
+    return { bookings: updatedBookings };
+  }
+
+  const converted = await tryConvertNextWaitlist(target.room_id, {
+    start: target.start_time,
+    end: target.end_time,
+  });
+
+  if (converted) {
+    const finalBookings = await getBookings();
+    return {
+      bookings: finalBookings,
+      converted: { booking: converted.booking, waitlistId: converted.waitlist.id },
+    };
+  }
+
+  return { bookings: updatedBookings };
 }
 
 export async function checkInBooking(bookingId: string): Promise<Booking[]> {

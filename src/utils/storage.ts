@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
   users: 'roomflow:v1:users',
   rooms: 'roomflow:v1:rooms',
   bookings: 'roomflow:v1:bookings',
+  waitlists: 'roomflow:v1:waitlists',
   authUserId: 'roomflow:v1:auth-user-id',
   theme: 'roomflow:v1:theme',
   conflictCache: 'roomflow:v1:conflict-cache',
