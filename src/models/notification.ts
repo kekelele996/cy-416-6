@@ -11,10 +11,12 @@ export interface Notification {
   booking_id?: string;
   waitlist_id?: string;
   read: boolean;
+  dismissed: boolean;
   created_at: string;
   read_at?: string;
+  dismissed_at?: string;
 }
 
-export type NotificationDraft = Omit<Notification, 'id' | 'read' | 'created_at'> & {
+export type NotificationDraft = Omit<Notification, 'id' | 'read' | 'dismissed' | 'created_at'> & {
   id?: string;
 };

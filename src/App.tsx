@@ -86,7 +86,7 @@ function AppShell() {
   }, [location.pathname]);
 
   const userNotifications = useMemo(
-    () => notifications.filter((n) => n.user_id === currentUser?.id),
+    () => notifications.filter((n) => n.user_id === currentUser?.id && !n.dismissed),
     [notifications, currentUser?.id],
   );
 

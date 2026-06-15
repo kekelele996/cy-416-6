@@ -6,9 +6,12 @@ export async function getNotifications(): Promise<Notification[]> {
   return readCollection<Notification[]>(STORAGE_KEYS.notifications, []);
 }
 
-export async function getUserNotifications(userId: string): Promise<Notification[]> {
+export async function getUserNotifications(
+  userId: string,
+  includeDismissed = false,
+): Promise<Notification[]> {
   const all = await getNotifications();
-  return all.filter((n) => n.user_id === userId);
+  return all.filter((n) => n.user_id === userId && (includeDismissed || !n.dismissed));
 }
 
 export async function createNotification(draft: NotificationDraft): Promise<Notification> {
@@ -17,6 +20,7 @@ export async function createNotification(draft: NotificationDraft): Promise<Noti
     ...draft,
     id: draft.id ?? nanoid('notif'),
     read: false,
+    dismissed: false,
     created_at: new Date().toISOString(),
   };
   await writeCollection(STORAGE_KEYS.notifications, [nextNotification, ...notifications]);
@@ -39,15 +43,23 @@ export async function markAllUserNotificationsRead(userId: string): Promise<Noti
   return writeCollection(STORAGE_KEYS.notifications, updated);
 }
 
-export async function clearNotification(notificationId: string): Promise<Notification[]> {
+export async function dismissNotification(notificationId: string): Promise<Notification[]> {
   const notifications = await getNotifications();
-  const updated = notifications.filter((n) => n.id !== notificationId);
+  const updated = notifications.map((n) =>
+    n.id === notificationId ? { ...n, dismissed: true, dismissed_at: new Date().toISOString() } : n,
+  );
   return writeCollection(STORAGE_KEYS.notifications, updated);
+}
+
+export async function clearNotification(notificationId: string): Promise<Notification[]> {
+  return dismissNotification(notificationId);
 }
 
 export async function clearAllUserNotifications(userId: string): Promise<Notification[]> {
   const notifications = await getNotifications();
-  const updated = notifications.filter((n) => n.user_id !== userId);
+  const updated = notifications.map((n) =>
+    n.user_id === userId ? { ...n, dismissed: true, dismissed_at: new Date().toISOString() } : n,
+  );
   return writeCollection(STORAGE_KEYS.notifications, updated);
 }
 
@@ -58,7 +70,7 @@ export async function createWaitlistConvertedNotification(params: {
   title: string;
   description: string;
 }): Promise<Notification> {
-  const existing = await getUserNotifications(params.userId);
+  const existing = await getUserNotifications(params.userId, true);
   const duplicate = existing.find(
     (n) =>
       n.type === NotificationType.WAITLIST_CONVERTED &&

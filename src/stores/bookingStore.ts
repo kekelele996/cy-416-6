@@ -113,7 +113,8 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   },
 
   async restoreNotificationsFromWaitlists(userId, rooms) {
-    const { waitlists, bookings, notifications: existingNotifs } = get();
+    const { waitlists, bookings } = get();
+    const existingNotifs = await getUserNotifications(userId, true);
     const convertedByUser = waitlists.filter(
       (w) => w.user_id === userId && w.status === WaitlistStatus.CONVERTED && w.converted_booking_id,
     );
@@ -146,9 +147,9 @@ export const useBookingStore = create<BookingState>((set, get) => ({
 
     if (missing.length > 0) {
       await Promise.all(missing);
-      const refreshed = await getUserNotifications(userId);
-      set({ notifications: refreshed });
     }
+    const refreshed = await getUserNotifications(userId);
+    set({ notifications: refreshed });
   },
 
   async create(draft) {
@@ -283,7 +284,9 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   async clearNotification(id) {
     await persistClear(id);
     set((state) => ({
-      notifications: state.notifications.filter((n) => n.id !== id),
+      notifications: state.notifications.map((n) =>
+        n.id === id ? { ...n, dismissed: true, dismissed_at: dayjs().toISOString() } : n,
+      ),
     }));
   },
 }));
